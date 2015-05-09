@@ -3,11 +3,12 @@
 
 #include "stdafx.h"
 #include <fstream>
-#include <string>
+#include <vector>
 #include <cctype>
-#include <malloc.h>
 
-void Error_Message(int tag)
+using namespace std;
+
+void ErrorMessage(int tag)
 {
 	if (tag == 1)
 	{
@@ -25,98 +26,96 @@ void Error_Message(int tag)
 	{
 		printf("Error: cannot create file!\n");
 		system("pause");
-		exit(1);
+		exit(3);
 	}
 }
 
-void Open_File_To_Write(int number)
+void WriteToFile(const int &number)
 {
-	FILE *output = fopen("output.txt", "w");
-	if (output == NULL)
+	ofstream outputFile;
+	outputFile.open("output.txt", ofstream::out);
+
+	if (outputFile.good())
 	{
-		Error_Message(3);
+		outputFile << number;
 	}
-	fprintf(output, "%d", number);
-	fclose(output);
+	else
+	{
+		ErrorMessage(3);
+	}
 }
 
-int String_To_Int(char* line)
+int StringToInt(char* line)
 {
 	int number = 0;
 	char *pLastChar = NULL;
 	number = strtol(line, &pLastChar, 10);
+
 	if (number < 0 || number > 255)
 	{
-		Error_Message(2);
+		ErrorMessage(2);
 	}
 	return number;
 }
 
-void From_Bits_To_Decimal(int* bits_array)
+void FromBitsToDecimal(const vector<int> &bitsArray)
 {
-	int i = 0, end_counter = 7, intermediate_result = 0;
-	while (i < 8)
+	int position = 7, result = 0;
+
+	for (auto bit : bitsArray)
 	{
-		intermediate_result += bits_array[i] * pow(2, end_counter);
-		i++;
-		end_counter--;
+		result += bit * pow(2, position);
+		--position;
 	}
-	Open_File_To_Write(intermediate_result);
+
+	WriteToFile(result);
 }
 
-int* Divide_for_bits(int number)
+vector<int> DivideForBits(int &number)
 {
-	int* bits_array = new int[8];
-	int i = 0, division = 128, temp = 0;
-	while (i < 8)
+	vector<int> bitsArray;
+	int division = 128;
+
+	for (int i = 0; i < 8; ++i)
 	{
-		temp = number / division;
-		number = number - temp * division;
-		bits_array[i] = temp;
-		division = division / 2;
-		i++;
+		int bit = number / division;
+		bitsArray.push_back(bit);
+		number -= bit * division;
+		division /= 2;
 	}
-	return bits_array;
+
+	return bitsArray;
 }
 
-int* Invert_Array(int* bits_array)
+bool CheckStringOnNumber(const char *inputString)
 {
-	int end_counter = 7, intermediate_result = 0;
-	for (int i = 0; i < 4; i++)
+	int symbol_counter = 0;
+	for (unsigned int i = 0; i < strlen(inputString); ++i)
 	{
-		intermediate_result = bits_array[i];
-		bits_array[i] = bits_array[end_counter];
-		bits_array[end_counter] = intermediate_result;
-		end_counter--;
-	}
-	return bits_array;
-}
-
-void Processing_String(char* line)
-{
-	int symbol_counter = 0, main_number = 0;
-	int* bits_array;
-	for (unsigned int i = 0; i < strlen(line); i++)
-	{
-		if (isdigit(line[i]))
+		if (isdigit(inputString[i]))
+		{
 			symbol_counter++;
+		}
 	}
-
-	if (symbol_counter != strlen(line))
-	{
-		Error_Message(1);
-	}
-	main_number = String_To_Int(line);
-	bits_array = Divide_for_bits(main_number);
-	bits_array = Invert_Array(bits_array);
-	From_Bits_To_Decimal(bits_array);
-	delete[] bits_array;
+	return symbol_counter == strlen(inputString);
 }
 
 int main(int argc, char* argv[])
 {	
-	char *string = argv[1];
-	Processing_String(string);
+	char *inputString = argv[1];
+	if (!(CheckStringOnNumber(inputString)))
+	{
+		ErrorMessage(1);
+	}
+
+	int mainNumber = StringToInt(inputString);
+
+	vector<int> bitsArray;
+	bitsArray = DivideForBits(mainNumber);
+
+	reverse(bitsArray.begin(), bitsArray.end());
+
+	FromBitsToDecimal(bitsArray);
 
 	return 0;
 }
