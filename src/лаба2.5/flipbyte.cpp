@@ -3,7 +3,6 @@
 
 #include "stdafx.h"
 #include <fstream>
-#include <vector>
 #include <cctype>
 
 using namespace std;
@@ -58,35 +57,6 @@ int StringToInt(char* line)
 	return number;
 }
 
-void FromBitsToDecimal(const vector<int> &bitsArray)
-{
-	int position = 7, result = 0;
-
-	for (auto bit : bitsArray)
-	{
-		result += bit * pow(2, position);
-		--position;
-	}
-
-	WriteToFile(result);
-}
-
-vector<int> DivideForBits(int &number)
-{
-	vector<int> bitsArray;
-	int division = 128;
-
-	for (int i = 0; i < 8; ++i)
-	{
-		int bit = number / division;
-		bitsArray.push_back(bit);
-		number -= bit * division;
-		division /= 2;
-	}
-
-	return bitsArray;
-}
-
 bool CheckStringOnNumber(const char *inputString)
 {
 	int symbol_counter = 0;
@@ -100,6 +70,16 @@ bool CheckStringOnNumber(const char *inputString)
 	return symbol_counter == strlen(inputString);
 }
 
+void InvertNumber(const int &main, int &result)
+{
+	for (int i = 0; i < 8; ++i)
+	{
+		int temp;
+		temp = (main >> i) & 1;
+		result += temp << 8 - i - 1;
+	}
+}
+
 int main(int argc, char* argv[])
 {	
 	char *inputString = argv[1];
@@ -109,13 +89,10 @@ int main(int argc, char* argv[])
 	}
 
 	int mainNumber = StringToInt(inputString);
-
-	vector<int> bitsArray;
-	bitsArray = DivideForBits(mainNumber);
-
-	reverse(bitsArray.begin(), bitsArray.end());
-
-	FromBitsToDecimal(bitsArray);
+	int result = 0;
+	
+	InvertNumber(mainNumber, result);
+	WriteToFile(result);
 
 	return 0;
 }
